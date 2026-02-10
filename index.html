@@ -25,12 +25,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      transition: opacity 0.8s ease;
       z-index: 10;
-    }
-    #initialScreen.hidden {
-      opacity: 0;
-      pointer-events: none;
     }
     h1 {
       font-size: 3.2rem;
@@ -43,6 +38,7 @@
       max-width: 420px;
       padding: 18px 24px;
       font-size: 1.5rem;
+      margin: 15px 0;
       border: none;
       border-radius: 12px;
       background: rgba(255,255,255,0.18);
@@ -66,23 +62,24 @@
     video {
       width: 100%;
       height: 100%;
-      object-fit: cover; /* cover = full screen fill, contain = poora dikhe lekin black bars aa sakte hain */
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
 
-  <!-- Naam daalne wala screen -->
+  <!-- Input screen -->
   <div id="initialScreen">
     <h1>Apna Naam Likh Do... 😏</h1>
-    <input type="text" id="name" placeholder="Minimum 3 akshar" autocomplete="off" autofocus>
+    <input type="text" id="name" placeholder="Naam (minimum 3 akshar)" autocomplete="off" autofocus>
+    <input type="date" id="dob" placeholder="Date of Birth">
   </div>
 
-  <!-- Fullscreen prank video -->
+  <!-- Fullscreen video (turant shuru) -->
   <div id="videoScreen">
     <video id="prankVideo" autoplay loop muted playsinline>
       <source id="videoSrc" src="" type="video/mp4">
-      Sorry, video load nahi ho raha...
+      Video load nahi ho raha...
     </video>
   </div>
 
@@ -94,10 +91,9 @@
     const source        = document.getElementById('videoSrc');
 
     // ────────────────────────────────────────────────
-    // Yeh values bilkul sahi hain ab
     const USERNAME = "copai093-ops";
     const REPO     = "prank";
-    const FILE     = "2";               // repo mein extension nahi hai
+    const FILE     = "2";               // ← Yahan .mp4 wala naam daalo jaise "prank.mp4"
     const BRANCH   = "main";
     // ────────────────────────────────────────────────
 
@@ -110,32 +106,26 @@
         source.src = videoURL;
         video.load();
 
-        // Fade out initial screen
-        initialScreen.classList.add('hidden');
+        // Turant hide input screen (no fade delay for sudden shock)
+        initialScreen.style.display = 'none';
+        videoScreen.style.display = 'flex';
 
-        setTimeout(() => {
-          initialScreen.style.display = 'none';
-          videoScreen.style.display = 'flex';
-
-          // Force play (mobile ke liye muted rakha hai)
-          video.play().catch(err => {
-            console.log("Autoplay blocked:", err);
-            video.muted = true;
-            video.play();
-          });
-        }, 800); // fade animation ke baad
+        // Autoplay force (mobile pe muted chahiye hota hai)
+        video.play().catch(() => {
+          video.muted = true;
+          video.play();
+        });
       }
     });
 
-    // Agar video nahi chalta to error screen
+    // Error handling – agar video nahi chalta
     video.onerror = () => {
       document.body.innerHTML = `
         <div style="color:white; text-align:center; margin-top:40vh; font-size:1.5rem;">
           Video nahi chal raha 😢<br><br>
-          Possible reasons:<br>
-          1. File "2" corrupt hai ya upload galat hua<br>
-          2. Browser MP4 bina extension ke nahi chala raha<br><br>
-          <small>Try karo: file ko rename karke "prank.mp4" banao aur code mein FILE = "prank.mp4" kar do</small>
+          Sabse common reason: File ka naam "2" hai (bina .mp4 ke)<br>
+          Fix: GitHub pe file rename karo → "prank.mp4" banao<br>
+          Phir code mein FILE = "prank.mp4" kar do
         </div>`;
     };
   </script>
