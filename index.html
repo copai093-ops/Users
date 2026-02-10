@@ -3,63 +3,82 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Naam se Video Play</title>
+  <title>Prank - Naam Daalo 😈</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background: #f0f4f8;
-      padding: 30px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
       text-align: center;
     }
     h1 {
-      color: #2c3e50;
+      color: #ff3366;
+      text-shadow: 0 0 10px #ff3366;
+      margin: 30px 0;
     }
     .container {
-      max-width: 600px;
+      max-width: 500px;
       margin: 0 auto;
-      background: white;
+      background: rgba(0, 0, 0, 0.6);
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
     input {
       width: 100%;
-      padding: 12px;
-      margin: 12px 0;
-      border: 2px solid #3498db;
-      border-radius: 6px;
+      padding: 14px 16px;
+      margin: 15px 0;
+      border: none;
+      border-radius: 8px;
       font-size: 17px;
+      background: rgba(255, 255, 255, 0.12);
+      color: white;
+      outline: none;
+      transition: all 0.3s;
+    }
+    input:focus {
+      background: rgba(255, 255, 255, 0.22);
+      box-shadow: 0 0 15px rgba(255, 51, 102, 0.5);
+    }
+    input::placeholder {
+      color: #aaa;
     }
     #videoContainer {
-      margin-top: 25px;
+      margin: 25px 0;
       display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.7);
     }
     video {
       width: 100%;
-      max-height: 400px;
-      border-radius: 10px;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      display: block;
     }
     #message {
-      margin-top: 15px;
       font-size: 18px;
-      color: #e74c3c;
+      margin-top: 15px;
+      color: #ffcc00;
+      text-shadow: 0 0 5px #000;
     }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Apna Naam aur DOB Daalo</h1>
+    <h1>Apna Naam Likh Do... 😏</h1>
     
-    <input type="text" id="name" placeholder="Apna naam likho (kam se kam 3 letter)" autocomplete="off">
+    <input type="text" id="name" placeholder="Naam daalo (minimum 3 letter)" autocomplete="off">
     
-    <input type="date" id="dob" placeholder="Date of Birth">
+    <input type="date" id="dob">
     
     <div id="videoContainer">
-      <video id="myVideo" controls autoplay muted>
-        <source id="videoSource" src="" type="video/mp4">
-        Sorry, yeh browser video support nahi karta.
+      <video id="prankVideo" controls autoplay loop muted>
+        <source id="videoSrc" src="" type="video/mp4">
+        Sorry, video nahi chal raha...
       </video>
     </div>
     
@@ -69,60 +88,39 @@
   <script>
     const nameInput = document.getElementById('name');
     const videoContainer = document.getElementById('videoContainer');
-    const videoElement = document.getElementById('myVideo');
-    const videoSource = document.getElementById('videoSource');
-    const message = document.getElementById('message');
+    const video = document.getElementById('prankVideo');
+    const source = document.getElementById('videoSrc');
+    const msg = document.getElementById('message');
 
-    // Yeh change karna zaroori hai – tumhare GitHub ke hisaab se
-    const githubUser = "YOUR_GITHUB_USERNAME";          // ← yaha apna username daalo
-    const githubRepo  = "YOUR_PUBLIC_REPO_NAME";        // ← repo ka naam
-    const branch      = "main";                         // mostly "main" ya "master"
+    // ─────────────────────────────────────────────
+    //     Yahan sirf yeh 3 cheezein badlo
+    // ─────────────────────────────────────────────
+    const USERNAME = "nsti";               // apna GitHub username (small letters)
+    const REPO     = "prank";              // repo ka naam
+    const FILE     = "2";                  // file ka naam → agar .mp4 hai to "2.mp4" likh do
+    const BRANCH   = "main";               // mostly "main", agar "master" hai to badal dena
+    // ─────────────────────────────────────────────
 
-    // Example: agar naam ke pehle 3 letter "rah" hain to video1.mp4
-    // "pri" → video2.mp4 etc.
-    // Tum apne hisaab se mapping bana sakte ho
-    const videoMap = {
-      "rah": "video1.mp4",
-      "pri": "video2.mp4",
-      "saa": "video3.mp4",
-      "aaa": "intro.mp4",
-      // aur jitne chahiye utne add kar do
-      // default video agar match na ho to
-      "default": "default-video.mp4"
-    };
+    const videoURL = `https://raw.githubusercontent.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
 
-    nameInput.addEventListener('input', function() {
-      const name = nameInput.value.trim().toLowerCase();
-      message.textContent = "";
-
-      if (name.length >= 3) {
-        // pehle 3 letters
-        const prefix = name.substring(0, 3);
-        
-        // mapping se video file name nikaalo
-        let videoFile = videoMap[prefix] || videoMap["default"];
-        
-        // GitHub raw URL banao
-        const videoUrl = `https://raw.githubusercontent.com/${githubUser}/${githubRepo}/${branch}/${videoFile}`;
-
-        // ya agar GitHub Pages use kar rahe ho to:
-        // const videoUrl = `https://${githubUser}.github.io/${githubRepo}/${videoFile}`;
-
-        videoSource.src = videoUrl;
-        videoElement.load();
-
-        // video dikhane ki koshish
+    nameInput.addEventListener('input', () => {
+      const text = nameInput.value.trim();
+      
+      if (text.length >= 3) {
+        source.src = videoURL;
+        video.load();
         videoContainer.style.display = "block";
+        msg.textContent = "Prank shuru... 😂";
 
-        // optional: error handling
-        videoElement.onerror = () => {
-          message.textContent = "Video nahi mila ya link galat hai! GitHub URL check karo.";
+        // Error handling
+        video.onerror = () => {
+          msg.innerHTML = `Video nahi mila!<br>Check karo:<br>1. Repo public hai?<br>2. File ka naam sahi hai? ("${FILE}")<br>3. Username/repo/branch galat to nahi?`;
           videoContainer.style.display = "none";
         };
-
-      } else {
+      } 
+      else {
         videoContainer.style.display = "none";
-        message.textContent = "Naam mein kam se kam 3 letter daalo...";
+        msg.textContent = text.length === 0 ? "Naam likho..." : "Aur  " + (3 - text.length) + " letter chahiye...";
       }
     });
   </script>
