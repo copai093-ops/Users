@@ -5,79 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prank Mode 😈</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      background: #000;
-      height: 100vh;
-      overflow: hidden;
-      font-family: Arial, sans-serif;
-    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { background:#000; height:100vh; overflow:hidden; font-family:Arial, sans-serif; }
     #initialScreen {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 10;
+      position:fixed; inset:0;
+      background:linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color:white; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; z-index:10;
     }
-    h1 {
-      font-size: 3.2rem;
-      color: #ff3366;
-      text-shadow: 0 0 25px #ff3366;
-      margin-bottom: 2.5rem;
-    }
+    h1 { font-size:3.2rem; color:#ff3366; text-shadow:0 0 25px #ff3366; margin-bottom:2.5rem; }
     input {
-      width: 85%;
-      max-width: 420px;
-      padding: 18px 24px;
-      font-size: 1.5rem;
-      margin: 15px 0;
-      border: none;
-      border-radius: 12px;
-      background: rgba(255,255,255,0.18);
-      color: white;
-      text-align: center;
-      outline: none;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      width:85%; max-width:420px; padding:18px 24px; font-size:1.5rem; margin:15px 0;
+      border:none; border-radius:12px; background:rgba(255,255,255,0.18); color:white;
+      text-align:center; outline:none; box-shadow:0 0 20px rgba(0,0,0,0.4);
     }
-    input::placeholder {
-      color: #ccc;
-    }
+    input::placeholder { color:#ccc; }
     #videoScreen {
-      position: fixed;
-      inset: 0;
-      background: #000;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 5;
+      position:fixed; inset:0; background:#000; display:none;
+      align-items:center; justify-content:center; z-index:5;
     }
-    video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    video { width:100%; height:100%; object-fit:cover; }
+    #unmuteBtn {
+      position:absolute; top:20px; right:20px; z-index:20;
+      padding:12px 20px; font-size:1.1rem; background:#ff3366; color:white;
+      border:none; border-radius:50px; cursor:pointer; box-shadow:0 0 15px #ff3366;
+      display:none; /* shuru mein hide */
     }
+    #unmuteBtn:hover { background:#ff1a4d; }
   </style>
 </head>
 <body>
 
-  <!-- Input screen -->
   <div id="initialScreen">
     <h1>Apna Naam Likh Do... 😏</h1>
     <input type="text" id="name" placeholder="Naam (minimum 3 akshar)" autocomplete="off" autofocus>
     <input type="date" id="dob" placeholder="Date of Birth">
   </div>
 
-  <!-- Fullscreen video (turant shuru) -->
   <div id="videoScreen">
-    <video id="prankVideo" autoplay loop muted playsinline>
+    <button id="unmuteBtn">🔊 Sound On</button>
+    <video id="prankVideo" autoplay loop playsinline>
       <source id="videoSrc" src="" type="video/mp4">
       Video load nahi ho raha...
     </video>
@@ -89,44 +56,42 @@
     const videoScreen   = document.getElementById('videoScreen');
     const video         = document.getElementById('prankVideo');
     const source        = document.getElementById('videoSrc');
+    const unmuteBtn     = document.getElementById('unmuteBtn');
 
-    // ────────────────────────────────────────────────
     const USERNAME = "copai093-ops";
     const REPO     = "prank";
-    const FILE     = "2";               // ← Yahan .mp4 wala naam daalo jaise "prank.mp4"
+    const FILE     = "2";  // agar rename kiya to yahan "prank.mp4" etc. daal dena
     const BRANCH   = "main";
-    // ────────────────────────────────────────────────
 
     const videoURL = `https://raw.githubusercontent.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
 
     nameInput.addEventListener('input', () => {
       const text = nameInput.value.trim();
-
       if (text.length >= 3) {
         source.src = videoURL;
         video.load();
 
-        // Turant hide input screen (no fade delay for sudden shock)
         initialScreen.style.display = 'none';
         videoScreen.style.display = 'flex';
 
-        // Autoplay force (mobile pe muted chahiye hota hai)
-        video.play().catch(() => {
-          video.muted = true;
-          video.play();
-        });
+        // Autoplay muted se shuru
+        video.muted = true;
+        video.play().catch(() => video.play());
+
+        // Sound button dikhao (user click karega to unmute)
+        unmuteBtn.style.display = 'block';
       }
     });
 
-    // Error handling – agar video nahi chalta
+    // Unmute button click pe sound on
+    unmuteBtn.addEventListener('click', () => {
+      video.muted = false;
+      video.volume = 1.0;  // full volume
+      unmuteBtn.style.display = 'none';  // hide after unmute
+    });
+
     video.onerror = () => {
-      document.body.innerHTML = `
-        <div style="color:white; text-align:center; margin-top:40vh; font-size:1.5rem;">
-          Video nahi chal raha 😢<br><br>
-          Sabse common reason: File ka naam "2" hai (bina .mp4 ke)<br>
-          Fix: GitHub pe file rename karo → "prank.mp4" banao<br>
-          Phir code mein FILE = "prank.mp4" kar do
-        </div>`;
+      document.body.innerHTML = '<div style="color:white; text-align:center; margin-top:40vh; font-size:1.5rem;">Video nahi chal raha 😢<br>Check: file rename + .mp4 extension daalo</div>';
     };
   </script>
 
