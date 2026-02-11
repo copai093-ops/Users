@@ -2,17 +2,40 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Prank Mode 😈</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; width:100%; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
-    #initialScreen { position:fixed; inset:0; background:linear-gradient(135deg, #0f0c29, #302b63, #24243e); color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10; height:100vh; width:100vw; }
-    h1 { font-size: clamp(2.5rem, 12vw, 5rem); color:#ff0000; text-shadow:0 0 50px #ff0000; margin-bottom:3rem; text-align:center; animation: pulse 1.5s infinite; }
+    #initialScreen { 
+      position:fixed; inset:0; 
+      background:linear-gradient(135deg, #0f0c29, #302b63, #24243e); 
+      color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; 
+      z-index:10; height:100vh; width:100vw; 
+    }
+    h1 { 
+      font-size: clamp(2.5rem, 12vw, 5rem); 
+      color:#ff0000; text-shadow:0 0 50px #ff0000; 
+      margin-bottom:3rem; text-align:center; 
+      animation: pulse 1.5s infinite; 
+    }
     @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    input { width:85%; max-width:500px; padding:25px 40px; font-size: clamp(1.5rem, 8vw, 2.2rem); margin:25px 0; border:none; border-radius:25px; background:rgba(255,255,255,0.1); color:white; text-align:center; outline:none; box-shadow:0 0 50px rgba(255,0,0,0.7); }
+    input { 
+      width:85%; max-width:500px; 
+      padding:25px 40px; font-size: clamp(1.5rem, 8vw, 2.2rem); 
+      margin:25px 0; border:none; border-radius:25px; 
+      background:rgba(255,255,255,0.1); color:white; 
+      text-align:center; outline:none; 
+      box-shadow:0 0 50px rgba(255,0,0,0.7); 
+    }
     input::placeholder { color:#aaa; }
-    #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; } /* Click hint */
+    #videoScreen { 
+      position:fixed; inset:0; background:#000; display:none; 
+      z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; 
+    }
     video { width:100%; height:100%; object-fit:cover; object-position:center; }
     #unmuteBtn {
       position: absolute;
@@ -44,6 +67,7 @@
       Video nahi chal raha...
     </video>
   </div>
+
   <script>
     const nameInput = document.getElementById('name');
     const initialScreen = document.getElementById('initialScreen');
@@ -60,57 +84,25 @@
 
     function enterFullscreen() {
       const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(err => console.log("FS error:", err));
-      } else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-      else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
-      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-    }
-
-    // Name input pe Enter key press se fullscreen (gesture count hota hai)
-    nameInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault(); // Form submit na ho
-        if (nameInput.value.trim().length >= 3) {
-          triggerVideoAndFS();
+      if (!document.fullscreenElement) {  // already full nahi hai to try
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => console.log("FS error:", err));
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
         }
       }
-    });
+    }
 
-    // Input change pe check (lekin FS sirf gesture pe)
-    nameInput.addEventListener('input', () => {
-      const text = nameInput.value.trim();
-      if (text.length >= 3) {
-        // Sirf video start, FS nahi (kyunki no gesture)
-        source.src = videoURL;
-        video.load();
-        initialScreen.style.display = 'none';
-        videoScreen.style.display = 'block';
-
-        video.muted = true;
-        video.play().then(() => {
-          console.log("Video started – click video or press Enter for full screen");
-        }).catch(err => {
-          console.log("Autoplay blocked:", err);
-          unmuteBtn.style.display = 'block';
-        });
+    function showPrankAndFS() {
+      if (nameInput.value.trim().length < 3) {
+        alert("Naam toh likh bhai kam se kam 3 letters!");
+        return;
       }
-    });
 
-    // Video pe click se fullscreen (natural gesture)
-    video.addEventListener('click', () => {
-      enterFullscreen();
-    });
-
-    // Sound on
-    unmuteBtn.addEventListener('click', () => {
-      video.muted = false;
-      video.volume = 1.0;
-      unmuteBtn.style.display = 'none';
-    });
-
-    // Helper to trigger video (called from Enter)
-    function triggerVideoAndFS() {
       source.src = videoURL;
       video.load();
       initialScreen.style.display = 'none';
@@ -118,21 +110,50 @@
 
       video.muted = true;
       video.play().then(() => {
-        enterFullscreen(); // Enter key gesture se FS try
+        console.log("Video started – entering fullscreen");
+        enterFullscreen();
       }).catch(err => {
-        console.log("Play error:", err);
+        console.log("Autoplay blocked:", err);
         unmuteBtn.style.display = 'block';
-        enterFullscreen(); // Try anyway (gesture se)
+        // fullscreen phir bhi try (user gesture se)
+        enterFullscreen();
       });
     }
 
+    // Enter key press pe trigger
+    nameInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        showPrankAndFS();
+      }
+    });
+
+    // Video pe click/tap → fullscreen + sound try
+    video.addEventListener('click', () => {
+      enterFullscreen();
+      if (video.muted) {
+        video.muted = false;
+        video.volume = 1.0;
+        unmuteBtn.style.display = 'none';
+      }
+    });
+
+    // Unmute button
+    unmuteBtn.addEventListener('click', () => {
+      video.muted = false;
+      video.volume = 1.0;
+      unmuteBtn.style.display = 'none';
+      enterFullscreen(); // extra push
+    });
+
+    // Error handling
     video.onerror = () => {
       document.body.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:2rem;">
-        Video nahi chal raha 😢
+        Video load nahi hua 😢<br>Check: ${videoURL} exists aur mp4 hai?
       </div>`;
     };
 
-    console.log("Prank loaded. Video:", videoURL);
+    console.log("Prank Page Loaded. Video URL:", videoURL);
   </script>
 </body>
 </html>
