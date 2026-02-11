@@ -56,7 +56,7 @@
     const BRANCH   = "main";
 
     const VIDEO_FILE = "3.mp4";
-    const IMAGE_FILE = "img.jpeg";   // your renamed image
+    const IMAGE_FILE = "img.jpeg";
     const SOUND_FILE = "ring.mp3";
 
     const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${VIDEO_FILE}`;
@@ -78,7 +78,10 @@
     }
 
     function stopVibration() {
-      if (vibrateInterval) clearInterval(vibrateInterval);
+      if (vibrateInterval) {
+        clearInterval(vibrateInterval);
+        vibrateInterval = null;
+      }
       navigator.vibrate(0);
     }
 
@@ -98,61 +101,63 @@
     function startPrankSequence() {
       initialScreen.style.display = 'none';
 
-      // ── 1. Video (6 seconds) ──
+      // ── 1. Video phase (6 seconds) + vibration ──
       videoScreen.style.display = 'block';
       videoSrc.src = videoURL;
       video.load();
       video.muted = true;
       video.play().catch(()=>{});
-      startVibration();
+
+      startVibration();           // ← vibration starts here
       enterFullscreen();
 
-      // Stop video & switch to image after 6 seconds
+      // After exactly 6 seconds: stop video + stop vibration + switch to image
       setTimeout(() => {
         video.pause();
         videoScreen.style.display = 'none';
+        stopVibration();          // ← vibration completely stops here
 
-        // ── 2. Image (15 seconds) + sound loop starts ──
+        // ── 2. Image + looping sound (no vibration) ──
         imageScreen.style.display = 'block';
         image.src = imageURL;
 
         audioSrc.src = soundURL;
         audio.load();
-        audio.play().catch(e => console.log("Autoplay blocked", e)); // may need gesture
+        audio.play().catch(e => console.log("Autoplay blocked", e));
 
-        // Stop image after 15 seconds (optional – remove if you want image to stay)
+        // Optional: hide image after 15 sec (sound keeps playing)
         setTimeout(() => {
           imageScreen.style.display = 'none';
-          // Sound continues looping even after image disappears
         }, 15000);
 
       }, 6000);
     }
 
-    // Trigger on Enter (recommended)
+    // Trigger on Enter key (best for sound + fullscreen)
     nameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (nameInput.value.trim().length >= 3) {
           startPrankSequence();
-          setTimeout(unmuteVideo, 400); // try to enable sound
+          setTimeout(unmuteVideo, 400);
         }
       }
     });
 
-    // Optional: also trigger on input if name long enough
+    // Optional quick trigger while typing
     nameInput.addEventListener('input', () => {
       if (nameInput.value.trim().length >= 3) {
         startPrankSequence();
       }
     });
 
-    // Extra unmute + vibrate on tap/click anywhere
+    // Tap anywhere → try to unmute + extra vibrate + fullscreen
     document.addEventListener('click', () => {
       enterFullscreen();
       unmuteVideo();
       audio.play().catch(()=>{});
-      vibratePhone([800]);
+      // Optional: single strong vibrate on tap (only if you want it outside video phase)
+      navigator.vibrate?.([800]);
     });
 
     // Error handling
@@ -163,13 +168,8 @@
       stopVibration();
     };
 
-    image.onerror = () => {
-      console.log("Image load failed");
-    };
-
-    audio.onerror = () => {
-      console.log("MP3 load failed – check ring.mp3 in repo");
-    };
+    image.onerror = () => console.log("Image failed to load");
+    audio.onerror = () => console.log("MP3 failed to load – check ring.mp3");
 
     window.addEventListener('beforeunload', stopVibration);
   </script>
