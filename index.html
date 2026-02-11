@@ -8,15 +8,47 @@
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; width:100%; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
     #initialScreen { position:fixed; inset:0; background:linear-gradient(135deg, #0f0c29, #302b63, #24243e); color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10; height:100vh; width:100vw; }
-    h1 { font-size:3.2rem; color:#ff3366; text-shadow:0 0 25px #ff3366; margin-bottom:2.5rem; }
-    input { width:85%; max-width:420px; padding:18px 24px; font-size:1.5rem; margin:15px 0; border:none; border-radius:12px; background:rgba(255,255,255,0.18); color:white; text-align:center; outline:none; box-shadow:0 0 20px rgba(0,0,0,0.4); }
+    h1 { font-size: clamp(2rem, 8vw, 3.2rem); color:#ff3366; text-shadow:0 0 25px #ff3366; margin-bottom:2.5rem; text-align:center; padding:0 20px; }
+    input { width:85%; max-width:420px; padding:18px 24px; font-size: clamp(1.2rem, 5vw, 1.5rem); margin:15px 0; border:none; border-radius:12px; background:rgba(255,255,255,0.18); color:white; text-align:center; outline:none; box-shadow:0 0 20px rgba(0,0,0,0.4); }
     input::placeholder { color:#ccc; }
-    #videoScreen { position:fixed; inset:0; background:#000; display:none; align-items:center; justify-content:center; z-index:5; height:100vh; width:100vw; overflow:hidden; }
+    #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; }
     video { width:100%; height:100%; object-fit:cover; object-position:center; }
-    #controls { position:absolute; bottom:20px; left:50%; transform:translateX(-50%); z-index:20; display:flex; gap:15px; }
-    button { padding:12px 24px; font-size:1.1rem; background:#ff3366; color:white; border:none; border-radius:50px; cursor:pointer; box-shadow:0 0 15px #ff3366; }
-    button:hover { background:#ff1a4d; }
-    @media (max-width: 768px) { h1 { font-size:2.5rem; } input { font-size:1.2rem; padding:15px 20px; } }
+    #fsBtn {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 15px 30px;
+      font-size: 1.3rem;
+      background: #ff3366;
+      color: white;
+      border: none;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 25px #ff3366, 0 0 50px #ff1a4d;
+      opacity: 0.9;
+      transition: all 0.3s;
+    }
+    #fsBtn:hover { opacity:1; transform: translateX(-50%) scale(1.1); background:#ff1a4d; }
+    #unmuteBtn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 20;
+      padding: 12px 24px;
+      font-size: 1.1rem;
+      background:#ff3366;
+      color:white;
+      border:none;
+      border-radius:50px;
+      cursor:pointer;
+      box-shadow:0 0 15px #ff3366;
+      display:none;
+    }
+    @media (max-width: 768px) {
+      #fsBtn { padding:12px 25px; font-size:1.1rem; bottom:20px; }
+    }
   </style>
 </head>
 <body>
@@ -26,13 +58,11 @@
     <input type="date" id="dob" placeholder="Enter Your Dob">
   </div>
   <div id="videoScreen">
-    <div id="controls">
-      <button id="unmuteBtn">🔊 Sound On</button>
-      <button id="fsBtn">🖥️ Full Screen Karo (F11 jaisa)</button>
-    </div>
+    <button id="unmuteBtn">🔊 Sound On</button>
+    <button id="fsBtn">🖥️ Full Screen Mein Dekho! (Prank Full On)</button>
     <video id="prankVideo" autoplay loop playsinline muted>
       <source id="videoSrc" src="" type="video/mp4">
-      Video load nahi ho raha...
+      Video nahi chal raha...
     </video>
   </div>
   <script>
@@ -51,17 +81,12 @@
     const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
 
     // Fullscreen function (cross-browser)
-    function goFullScreen() {
-      const elem = video; // Ya document.documentElement agar pura page chahiye
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) { // Safari
-        elem.webkitRequestFullscreen();
-      } else if (elem.mozRequestFullScreen) { // Firefox
-        elem.mozRequestFullScreen();
-      } else if (elem.msRequestFullscreen) { // IE/Edge old
-        elem.msRequestFullscreen();
-      }
+    function enterFullscreen() {
+      const elem = document.documentElement; // Pura page fullscreen (better for prank)
+      if (elem.requestFullscreen) elem.requestFullscreen();
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
 
     nameInput.addEventListener('input', () => {
@@ -70,46 +95,48 @@
         source.src = videoURL;
         video.load();
         initialScreen.style.display = 'none';
-        videoScreen.style.display = 'flex';
+        videoScreen.style.display = 'block'; // 'flex' ki jagah 'block' for better video fit
 
         video.muted = true;
         video.play().then(() => {
-          console.log("Prank video playing! 🔥");
-          // Fullscreen auto try mat karo – fail hoga. Button se user trigger karega
+          console.log("Prank video started! 🔥");
+          // Fullscreen auto try nahi – fail hoga. Button se user karega
+          fsBtn.style.display = 'block'; // Button show kar do taaki user click kare
         }).catch(err => {
-          console.log("Autoplay blocked:", err);
-          unmuteBtn.style.display = 'inline-block'; // Already in controls
+          console.log("Autoplay issue:", err);
+          unmuteBtn.style.display = 'block';
+          fsBtn.style.display = 'block';
         });
       }
     });
 
-    // Unmute
+    // Sound on
     unmuteBtn.addEventListener('click', () => {
       video.muted = false;
       video.volume = 1.0;
       unmuteBtn.style.display = 'none';
     });
 
-    // Fullscreen button click pe true fullscreen
+    // Fullscreen on button click (yeh guaranteed chalega kyunki click gesture hai)
     fsBtn.addEventListener('click', () => {
-      goFullScreen();
-      fsBtn.style.display = 'none'; // Ek baar click ke baad hide
+      enterFullscreen();
+      fsBtn.style.display = 'none'; // Hide after click
     });
 
-    // Optional: Agar user Esc press kare to button wapas dikha sakte ho
+    // Agar user Esc kare to button wapas dikha sakte ho (optional)
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
-        fsBtn.style.display = 'inline-block';
+        fsBtn.style.display = 'block';
       }
     });
 
     video.onerror = () => {
       document.body.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:1.5rem;">
-        Video nahi chal raha 😢<br>Direct check: <a href="${videoURL}" style="color:#ff3366;" target="_blank">${videoURL}</a>
+        Video load failed 😢<br>Check: <a href="${videoURL}" style="color:#ff3366;" target="_blank">Video Link</a>
       </div>`;
     };
 
-    console.log("Prank loaded. Video:", videoURL);
+    console.log("Prank site ready. Video:", videoURL);
   </script>
 </body>
 </html>
