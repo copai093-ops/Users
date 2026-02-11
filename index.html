@@ -12,8 +12,9 @@
     @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     input { width:85%; max-width:500px; padding:25px 40px; font-size: clamp(1.5rem, 8vw, 2.2rem); margin:25px 0; border:none; border-radius:25px; background:rgba(255,255,255,0.1); color:white; text-align:center; outline:none; box-shadow:0 0 50px rgba(255,0,0,0.7); }
     input::placeholder { color:#aaa; }
-    #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; }
-    video { width:100%; height:100%; object-fit:cover; object-position:center; }
+    #videoScreen, #imageScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; }
+    video, img { width:100%; height:100%; object-fit:cover; object-position:center; }
+    #audio { display:none; }
   </style>
 </head>
 <body>
@@ -22,38 +23,53 @@
     <input type="text" id="name" placeholder="Enter Your Name" autocomplete="off" autofocus>
     <input type="date" id="dob" placeholder="Enter Your Dob">
   </div>
+
   <div id="videoScreen">
-    <video id="prankVideo" autoplay loop playsinline muted>
+    <video id="prankVideo" autoplay playsinline muted>
       <source id="videoSrc" src="" type="video/mp4">
       Video nahi chal raha...
     </video>
   </div>
 
+  <div id="imageScreen">
+    <img id="prankImage" src="" alt="Scary Image">
+  </div>
+
+  <audio id="bgSound" loop>
+    <source src="" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
   <script>
-    const nameInput = document.getElementById('name');
+    const nameInput   = document.getElementById('name');
     const initialScreen = document.getElementById('initialScreen');
-    const videoScreen = document.getElementById('videoScreen');
-    const video = document.getElementById('prankVideo');
-    const source = document.getElementById('videoSrc');
+    const videoScreen   = document.getElementById('videoScreen');
+    const imageScreen   = document.getElementById('imageScreen');
+    const video         = document.getElementById('prankVideo');
+    const videoSrc      = document.getElementById('videoSrc');
+    const image         = document.getElementById('prankImage');
+    const audio         = document.getElementById('bgSound');
+    const audioSrc      = audio.querySelector('source');
 
     const USERNAME = "copai093-ops";
-    const REPO = "Users";
-    const FILE = "3.mp4";
-    const BRANCH = "main";
-    const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
+    const REPO     = "Users";
+    const BRANCH   = "main";
+
+    const VIDEO_FILE = "3.mp4";
+    const IMAGE_FILE = "img.jpeg";   // your renamed image
+    const SOUND_FILE = "ring.mp3";
+
+    const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${VIDEO_FILE}`;
+    const imageURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${IMAGE_FILE}`;
+    const soundURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${SOUND_FILE}`;
 
     let vibrateInterval = null;
 
-    // Vibration start / loop
     function startVibration() {
       if ("vibrate" in navigator) {
-        const pattern = [400, 150, 600, 200]; // scary pattern: long vibrate, short pause, longer vibrate
+        const pattern = [400, 150, 600, 200];
         vibratePhone(pattern);
-
-        // Lagatar chalane ke liye har ~2 sec mein repeat
-        vibrateInterval = setInterval(() => {
-          vibratePhone(pattern);
-        }, 2000); // adjust time if needed
+        vibrateInterval = setInterval(() => vibratePhone(pattern), 2000);
       }
     }
 
@@ -63,14 +79,13 @@
 
     function stopVibration() {
       if (vibrateInterval) clearInterval(vibrateInterval);
-      navigator.vibrate(0); // stop any ongoing
+      navigator.vibrate(0);
     }
 
     function enterFullscreen() {
       const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(() => {});
-      } else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+      if (elem.requestFullscreen) elem.requestFullscreen().catch(()=>{});
+      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
       else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
       else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
@@ -80,65 +95,83 @@
       video.volume = 1.0;
     }
 
-    // Enter key press se sab trigger
+    function startPrankSequence() {
+      initialScreen.style.display = 'none';
+
+      // ── 1. Video (6 seconds) ──
+      videoScreen.style.display = 'block';
+      videoSrc.src = videoURL;
+      video.load();
+      video.muted = true;
+      video.play().catch(()=>{});
+      startVibration();
+      enterFullscreen();
+
+      // Stop video & switch to image after 6 seconds
+      setTimeout(() => {
+        video.pause();
+        videoScreen.style.display = 'none';
+
+        // ── 2. Image (15 seconds) + sound loop starts ──
+        imageScreen.style.display = 'block';
+        image.src = imageURL;
+
+        audioSrc.src = soundURL;
+        audio.load();
+        audio.play().catch(e => console.log("Autoplay blocked", e)); // may need gesture
+
+        // Stop image after 15 seconds (optional – remove if you want image to stay)
+        setTimeout(() => {
+          imageScreen.style.display = 'none';
+          // Sound continues looping even after image disappears
+        }, 15000);
+
+      }, 6000);
+    }
+
+    // Trigger on Enter (recommended)
     nameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (nameInput.value.trim().length >= 3) {
-          triggerPrank();
+          startPrankSequence();
+          setTimeout(unmuteVideo, 400); // try to enable sound
         }
       }
     });
 
-    // Input change pe bhi try (lekin sound Enter pe guaranteed)
+    // Optional: also trigger on input if name long enough
     nameInput.addEventListener('input', () => {
-      const text = nameInput.value.trim();
-      if (text.length >= 3) {
-        startVideo();
+      if (nameInput.value.trim().length >= 3) {
+        startPrankSequence();
       }
     });
 
-    function startVideo() {
-      source.src = videoURL;
-      video.load();
-      initialScreen.style.display = 'none';
-      videoScreen.style.display = 'block';
-      video.muted = true; // start muted for autoplay
-      video.play().then(() => {
-        startVibration(); // vibration start
-        enterFullscreen();
-      }).catch(() => {
-        // Autoplay blocked → vibration phir bhi start (gesture se)
-        startVibration();
-        enterFullscreen();
-      });
-    }
-
-    function triggerPrank() {
-      startVideo();
-      // Gesture se sound on try (best chance)
-      setTimeout(unmuteVideo, 500); // thoda delay taaki play start ho jaye
-    }
-
-    // Video click pe extra unmute + vibrate boost + fullscreen
-    video.addEventListener('click', () => {
+    // Extra unmute + vibrate on tap/click anywhere
+    document.addEventListener('click', () => {
       enterFullscreen();
       unmuteVideo();
-      vibratePhone([800]); // strong single vibrate on tap
+      audio.play().catch(()=>{});
+      vibratePhone([800]);
     });
 
-    // Video error
+    // Error handling
     video.onerror = () => {
-      document.body.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:2rem;">
-        Video nahi chal raha 😢 (Check: 3.mp4 repo mein hai?)
+      document.body.innerHTML = `<div style="color:white;text-align:center;margin-top:40vh;font-size:2rem;">
+        Video load fail 😢 (3.mp4 check karo repo mein)
       </div>`;
       stopVibration();
     };
 
-    // Page leave hone pe vibration stop (battery save)
-    window.addEventListener('beforeunload', stopVibration);
+    image.onerror = () => {
+      console.log("Image load failed");
+    };
 
-    console.log("Prank ready. Video:", videoURL);
+    audio.onerror = () => {
+      console.log("MP3 load failed – check ring.mp3 in repo");
+    };
+
+    window.addEventListener('beforeunload', stopVibration);
   </script>
 </body>
 </html>
