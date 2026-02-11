@@ -10,55 +10,22 @@
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     html, body { height:100%; width:100%; overflow:hidden; background:#000; font-family:Arial, sans-serif; }
-    #initialScreen { 
-      position:fixed; inset:0; 
-      background:linear-gradient(135deg, #0f0c29, #302b63, #24243e); 
-      color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; 
-      z-index:10; height:100vh; width:100vw; 
-    }
-    h1 { 
-      font-size: clamp(2.5rem, 12vw, 5rem); 
-      color:#ff0000; text-shadow:0 0 50px #ff0000; 
-      margin-bottom:3rem; text-align:center; 
-      animation: pulse 1.5s infinite; 
-    }
+    #initialScreen { position:fixed; inset:0; background:linear-gradient(135deg, #0f0c29, #302b63, #24243e); color:white; display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:10; height:100vh; width:100vw; }
+    h1 { font-size: clamp(2.5rem, 12vw, 5rem); color:#ff0000; text-shadow:0 0 50px #ff0000; margin-bottom:3rem; text-align:center; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-    input { 
-      width:85%; max-width:500px; 
-      padding:25px 40px; font-size: clamp(1.5rem, 8vw, 2.2rem); 
-      margin:25px 0; border:none; border-radius:25px; 
-      background:rgba(255,255,255,0.1); color:white; 
-      text-align:center; outline:none; 
-      box-shadow:0 0 50px rgba(255,0,0,0.7); 
-    }
+    input { width:85%; max-width:500px; padding:25px 40px; font-size: clamp(1.5rem, 8vw, 2.2rem); margin:25px 0; border:none; border-radius:25px; background:rgba(255,255,255,0.1); color:white; text-align:center; outline:none; box-shadow:0 0 50px rgba(255,0,0,0.7); }
     input::placeholder { color:#aaa; }
-    #videoScreen { 
-      position:fixed; inset:0; background:#000; display:none; 
-      z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; 
-    }
+    #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; }
     video { width:100%; height:100%; object-fit:cover; object-position:center; }
-    #unmuteBtn {
-      position: absolute;
-      top: 40px;
-      right: 40px;
-      z-index: 30;
-      padding: 18px 40px;
-      font-size: 1.5rem;
-      background:#ff0000;
-      color:white;
-      border:none;
-      border-radius:70px;
-      cursor:pointer;
-      box-shadow:0 0 40px #ff0000;
-      display:none;
-    }
+    #unmuteBtn { position: absolute; top: 40px; right: 40px; z-index: 30; padding: 18px 40px; font-size: 1.5rem; background:#ff0000; color:white; border:none; border-radius:70px; cursor:pointer; box-shadow:0 0 40px #ff0000; display:none; }
   </style>
 </head>
 <body>
   <div id="initialScreen">
     <h1>Apna Naam Likh Do... 😱</h1>
     <input type="text" id="name" placeholder="Enter Your Name" autocomplete="off" autofocus>
-    <input type="date" id="dob" placeholder="Enter Your Dob">
+    <!-- Date optional, agar nahi chahiye to remove kar sakta hai -->
+    <!-- <input type="date" id="dob" placeholder="Enter Your Dob"> -->
   </div>
   <div id="videoScreen">
     <button id="unmuteBtn">🔊 Sound On Karo</button>
@@ -76,30 +43,22 @@
     const source = document.getElementById('videoSrc');
     const unmuteBtn = document.getElementById('unmuteBtn');
 
-    const USERNAME = "copai093-ops";
-    const REPO = "Users";
-    const FILE = "3.mp4";
-    const BRANCH = "main";
-    const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
+    const videoURL = "https://raw.githack.com/copai093-ops/Users/main/3.mp4";
 
     function enterFullscreen() {
       const elem = document.documentElement;
-      if (!document.fullscreenElement) {  // already full nahi hai to try
-        if (elem.requestFullscreen) {
-          elem.requestFullscreen().catch(err => console.log("FS error:", err));
-        } else if (elem.webkitRequestFullscreen) {
-          elem.webkitRequestFullscreen();
-        } else if (elem.mozRequestFullScreen) {
-          elem.mozRequestFullScreen();
-        } else if (elem.msRequestFullscreen) {
-          elem.msRequestFullscreen();
-        }
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen?.().catch(() => {});
+        elem.webkitRequestFullscreen?.();
+        elem.mozRequestFullScreen?.();
+        elem.msRequestFullscreen?.();
       }
     }
 
-    function showPrankAndFS() {
+    function showPrank() {
       if (nameInput.value.trim().length < 3) {
-        alert("Naam toh likh bhai kam se kam 3 letters!");
+        nameInput.style.boxShadow = "0 0 20px yellow";
+        setTimeout(() => { nameInput.style.boxShadow = "0 0 50px rgba(255,0,0,0.7)"; }, 1000);
         return;
       }
 
@@ -108,52 +67,42 @@
       initialScreen.style.display = 'none';
       videoScreen.style.display = 'block';
 
-      video.muted = true;
       video.play().then(() => {
-        console.log("Video started – entering fullscreen");
         enterFullscreen();
-      }).catch(err => {
-        console.log("Autoplay blocked:", err);
+      }).catch(() => {
         unmuteBtn.style.display = 'block';
-        // fullscreen phir bhi try (user gesture se)
         enterFullscreen();
       });
     }
 
-    // Enter key press pe trigger
-    nameInput.addEventListener('keydown', (e) => {
+    nameInput.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        showPrankAndFS();
+        showPrank();
       }
     });
 
-    // Video pe click/tap → fullscreen + sound try
     video.addEventListener('click', () => {
       enterFullscreen();
-      if (video.muted) {
-        video.muted = false;
-        video.volume = 1.0;
-        unmuteBtn.style.display = 'none';
-      }
+      video.muted = false;
+      unmuteBtn.style.display = 'none';
     });
 
-    // Unmute button
     unmuteBtn.addEventListener('click', () => {
       video.muted = false;
-      video.volume = 1.0;
+      video.volume = 1;
       unmuteBtn.style.display = 'none';
-      enterFullscreen(); // extra push
+      enterFullscreen();
     });
 
-    // Error handling
     video.onerror = () => {
-      document.body.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:2rem;">
-        Video load nahi hua 😢<br>Check: ${videoURL} exists aur mp4 hai?
+      videoScreen.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:2rem;">
+        Video nahi mila 😢<br>Check kar: 3.mp4 repo mein upload hai?
       </div>`;
     };
 
-    console.log("Prank Page Loaded. Video URL:", videoURL);
+    // Auto focus name input
+    nameInput.focus();
   </script>
 </body>
 </html>
