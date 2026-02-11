@@ -14,21 +14,6 @@
     input::placeholder { color:#aaa; }
     #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; }
     video { width:100%; height:100%; object-fit:cover; object-position:center; }
-    #unmuteBtn {
-      position: absolute;
-      top: 40px;
-      right: 40px;
-      z-index: 30;
-      padding: 18px 40px;
-      font-size: 1.5rem;
-      background:#ff0000;
-      color:white;
-      border:none;
-      border-radius:70px;
-      cursor:pointer;
-      box-shadow:0 0 40px #ff0000;
-      display:none;
-    }
   </style>
 </head>
 <body>
@@ -38,7 +23,6 @@
     <input type="date" id="dob" placeholder="Enter Your Dob">
   </div>
   <div id="videoScreen">
-    <button id="unmuteBtn">🔊 Sound On Karo</button>
     <video id="prankVideo" autoplay loop playsinline muted>
       <source id="videoSrc" src="" type="video/mp4">
       Video nahi chal raha...
@@ -51,7 +35,6 @@
     const videoScreen = document.getElementById('videoScreen');
     const video = document.getElementById('prankVideo');
     const source = document.getElementById('videoSrc');
-    const unmuteBtn = document.getElementById('unmuteBtn');
 
     const USERNAME = "copai093-ops";
     const REPO = "Users";
@@ -59,99 +42,103 @@
     const BRANCH = "main";
     const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
 
-    // Vibration function (safe way)
-    function vibratePhone() {
+    let vibrateInterval = null;
+
+    // Vibration start / loop
+    function startVibration() {
       if ("vibrate" in navigator) {
-        // Pattern: vibrate 300ms → pause 100ms → vibrate 500ms (ghost feel ke liye)
-        navigator.vibrate([300, 100, 500]);
-        // Ya simple: navigator.vibrate(800);
+        const pattern = [400, 150, 600, 200]; // scary pattern: long vibrate, short pause, longer vibrate
+        vibratePhone(pattern);
+
+        // Lagatar chalane ke liye har ~2 sec mein repeat
+        vibrateInterval = setInterval(() => {
+          vibratePhone(pattern);
+        }, 2000); // adjust time if needed
       }
-      // Agar nahi support karta (jaise iPhone) to kuch nahi karega, no error
+    }
+
+    function vibratePhone(pattern) {
+      navigator.vibrate(pattern);
+    }
+
+    function stopVibration() {
+      if (vibrateInterval) clearInterval(vibrateInterval);
+      navigator.vibrate(0); // stop any ongoing
     }
 
     function enterFullscreen() {
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(err => console.log("FS error:", err));
+        elem.requestFullscreen().catch(() => {});
       } else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
       else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
       else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
 
-    // Enter key press se trigger
+    function unmuteVideo() {
+      video.muted = false;
+      video.volume = 1.0;
+    }
+
+    // Enter key press se sab trigger
     nameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
         if (nameInput.value.trim().length >= 3) {
-          triggerVideoAndFS();
+          triggerPrank();
         }
       }
     });
 
-    // Input change pe video start (Android pe vibrate ke liye Enter better hai gesture ke liye)
+    // Input change pe bhi try (lekin sound Enter pe guaranteed)
     nameInput.addEventListener('input', () => {
       const text = nameInput.value.trim();
       if (text.length >= 3) {
-        source.src = videoURL;
-        video.load();
-        initialScreen.style.display = 'none';
-        videoScreen.style.display = 'block';
-        video.muted = true;
-        video.play().then(() => {
-          vibratePhone();          // ← Yahan vibrate call
-          console.log("Video started + vibrate");
-        }).catch(err => {
-          console.log("Autoplay blocked:", err);
-          unmuteBtn.style.display = 'block';
-          vibratePhone();          // Catch mein bhi try (gesture context)
-        });
+        startVideo();
       }
     });
 
-    // Video click pe fullscreen + sound + vibrate extra
-    video.addEventListener('click', () => {
-      enterFullscreen();
-      if (video.muted) {
-        video.muted = false;
-        video.volume = 1.0;
-        unmuteBtn.style.display = 'none';
-      }
-      vibratePhone();  // Extra vibrate on click
-    });
-
-    // Unmute button pe vibrate bhi
-    unmuteBtn.addEventListener('click', () => {
-      video.muted = false;
-      video.volume = 1.0;
-      unmuteBtn.style.display = 'none';
-      vibratePhone();
-    });
-
-    // Helper function
-    function triggerVideoAndFS() {
+    function startVideo() {
       source.src = videoURL;
       video.load();
       initialScreen.style.display = 'none';
       videoScreen.style.display = 'block';
-      video.muted = true;
+      video.muted = true; // start muted for autoplay
       video.play().then(() => {
-        vibratePhone();          // ← Yahan vibrate call (best place)
+        startVibration(); // vibration start
         enterFullscreen();
-      }).catch(err => {
-        console.log("Play error:", err);
-        unmuteBtn.style.display = 'block';
-        vibratePhone();
+      }).catch(() => {
+        // Autoplay blocked → vibration phir bhi start (gesture se)
+        startVibration();
         enterFullscreen();
       });
     }
 
+    function triggerPrank() {
+      startVideo();
+      // Gesture se sound on try (best chance)
+      setTimeout(unmuteVideo, 500); // thoda delay taaki play start ho jaye
+    }
+
+    // Video click pe extra unmute + vibrate boost + fullscreen
+    video.addEventListener('click', () => {
+      enterFullscreen();
+      unmuteVideo();
+      vibratePhone([800]); // strong single vibrate on tap
+    });
+
+    // Video error
     video.onerror = () => {
       document.body.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:2rem;">
-        Video nahi chal raha 😢
+        Video nahi chal raha 😢 (Check: 3.mp4 repo mein hai?)
       </div>`;
+      stopVibration();
     };
 
-    console.log("Prank loaded. Video:", videoURL);
+    // Page leave hone pe vibration stop (battery save)
+    window.addEventListener('beforeunload', stopVibration);
+
+    console.log("Prank ready. Video:", videoURL);
   </script>
 </body>
 </html>
