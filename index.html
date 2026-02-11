@@ -12,7 +12,7 @@
     @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
     input { width:85%; max-width:500px; padding:25px 40px; font-size: clamp(1.5rem, 8vw, 2.2rem); margin:25px 0; border:none; border-radius:25px; background:rgba(255,255,255,0.1); color:white; text-align:center; outline:none; box-shadow:0 0 50px rgba(255,0,0,0.7); }
     input::placeholder { color:#aaa; }
-    #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; } /* Click hint */
+    #videoScreen { position:fixed; inset:0; background:#000; display:none; z-index:5; height:100vh; width:100vw; overflow:hidden; cursor:pointer; }
     video { width:100%; height:100%; object-fit:cover; object-position:center; }
     #unmuteBtn {
       position: absolute;
@@ -44,6 +44,7 @@
       Video nahi chal raha...
     </video>
   </div>
+
   <script>
     const nameInput = document.getElementById('name');
     const initialScreen = document.getElementById('initialScreen');
@@ -51,11 +52,23 @@
     const video = document.getElementById('prankVideo');
     const source = document.getElementById('videoSrc');
     const unmuteBtn = document.getElementById('unmuteBtn');
+
     const USERNAME = "copai093-ops";
     const REPO = "Users";
     const FILE = "3.mp4";
     const BRANCH = "main";
     const videoURL = `https://raw.githack.com/${USERNAME}/${REPO}/${BRANCH}/${FILE}`;
+
+    // Vibration function (safe way)
+    function vibratePhone() {
+      if ("vibrate" in navigator) {
+        // Pattern: vibrate 300ms → pause 100ms → vibrate 500ms (ghost feel ke liye)
+        navigator.vibrate([300, 100, 500]);
+        // Ya simple: navigator.vibrate(800);
+      }
+      // Agar nahi support karta (jaise iPhone) to kuch nahi karega, no error
+    }
+
     function enterFullscreen() {
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
@@ -64,44 +77,57 @@
       else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
       else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
     }
-    // Name input pe Enter key press se fullscreen (gesture count hota hai)
+
+    // Enter key press se trigger
     nameInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        e.preventDefault(); // Form submit na ho
+        e.preventDefault();
         if (nameInput.value.trim().length >= 3) {
           triggerVideoAndFS();
         }
       }
     });
-    // Input change pe check (lekin FS sirf gesture pe)
+
+    // Input change pe video start (Android pe vibrate ke liye Enter better hai gesture ke liye)
     nameInput.addEventListener('input', () => {
       const text = nameInput.value.trim();
       if (text.length >= 3) {
-        // Sirf video start, FS nahi (kyunki no gesture)
         source.src = videoURL;
         video.load();
         initialScreen.style.display = 'none';
         videoScreen.style.display = 'block';
         video.muted = true;
         video.play().then(() => {
-          console.log("Video started – click video or press Enter for full screen");
+          vibratePhone();          // ← Yahan vibrate call
+          console.log("Video started + vibrate");
         }).catch(err => {
           console.log("Autoplay blocked:", err);
           unmuteBtn.style.display = 'block';
+          vibratePhone();          // Catch mein bhi try (gesture context)
         });
       }
     });
-    // Video pe click se fullscreen (natural gesture)
+
+    // Video click pe fullscreen + sound + vibrate extra
     video.addEventListener('click', () => {
       enterFullscreen();
+      if (video.muted) {
+        video.muted = false;
+        video.volume = 1.0;
+        unmuteBtn.style.display = 'none';
+      }
+      vibratePhone();  // Extra vibrate on click
     });
-    // Sound on
+
+    // Unmute button pe vibrate bhi
     unmuteBtn.addEventListener('click', () => {
       video.muted = false;
       video.volume = 1.0;
       unmuteBtn.style.display = 'none';
+      vibratePhone();
     });
-    // Helper to trigger video (called from Enter)
+
+    // Helper function
     function triggerVideoAndFS() {
       source.src = videoURL;
       video.load();
@@ -109,18 +135,22 @@
       videoScreen.style.display = 'block';
       video.muted = true;
       video.play().then(() => {
-        enterFullscreen(); // Enter key gesture se FS try
+        vibratePhone();          // ← Yahan vibrate call (best place)
+        enterFullscreen();
       }).catch(err => {
         console.log("Play error:", err);
         unmuteBtn.style.display = 'block';
-        enterFullscreen(); // Try anyway (gesture se)
+        vibratePhone();
+        enterFullscreen();
       });
     }
+
     video.onerror = () => {
       document.body.innerHTML = `<div style="color:white; text-align:center; margin-top:40vh; font-size:2rem;">
         Video nahi chal raha 😢
       </div>`;
     };
+
     console.log("Prank loaded. Video:", videoURL);
   </script>
 </body>
